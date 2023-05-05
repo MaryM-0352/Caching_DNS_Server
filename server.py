@@ -5,10 +5,10 @@ import time
 
 from cache_class import Record, Cache
 
-port = 53
-local_host = '127.0.0.1'
-remote_host = 'ns1.google.com'
-remote_port = 53
+PORT = 53
+LOCAL_HOST = '127.0.0.1'
+REMOTE_HOST = 'ns1.google.com'
+REMOTE_PORT = 53
 
 
 def get_name(data: bytes, offset=0, full_domain_name=b'') -> tuple:
@@ -50,12 +50,7 @@ def get_type(data: bytes, offset: int):
 
 def unpack_a(data: bytes, count: int, cache: Cache, now: float, offset=0):
     """Парсит запись типа А и AAAA(IP 4 версии и IP 6 версии)"""
-    ips = []
-    domain_name = ''
-    type_data = ''
-    ttl = 0
     for i in range(count):
-        ip = ''
         domain_name, offset = get_name(data, offset)
         type_data, offset = get_type(data, offset)
         ttl = int(binascii.hexlify(data[offset + 1:offset + 4]).decode(),
@@ -76,10 +71,6 @@ def unpack_a(data: bytes, count: int, cache: Cache, now: float, offset=0):
 
 def unpack_ns(data: bytes, cache: Cache, now: float, offset=0, count=1):
     """Парсит запись типа NS"""
-    servers = []
-    domain_name = ''
-    type_data = ''
-    ttl = 0
     for i in range(count):
         domain_name, offset = get_name(data, offset)
         type_data, offset = get_type(data, offset)
@@ -159,7 +150,7 @@ def remote_request(deliver_data: bytes, offset: int, data_type: str,
     remote_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     remote_data = ''
     try:
-        remote_server.sendto(deliver_data, (remote_host, port))
+        remote_server.sendto(deliver_data, (REMOTE_HOST, PORT))
         remote_data, _ = remote_server.recvfrom(1024)
         now = time.time()
     except:
@@ -175,18 +166,17 @@ def remote_request(deliver_data: bytes, offset: int, data_type: str,
     elif data_type == 'NS':
         offset = unpack_ns(data, cache, now, offset, answer_count)
         unpack_a(data, add_count, cache, now, offset)
-
     return remote_data
 
 
 def response():
     local_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    local_server.bind((local_host, port))
+    local_server.bind((LOCAL_HOST, PORT))
     cache = Cache()
     cache.clean_cache()
     local_address = ''
     local_data = ''
-    print(f'Listening {local_host}:{port}')
+    print(f'Listening {LOCAL_HOST}:{PORT}')
     while True:
         try:
             local_data, local_address = local_server.recvfrom(1024)
