@@ -187,18 +187,21 @@ def response():
         request_name, offset = get_name(slice_data)
         data_type, offset = get_type(slice_data, offset)
         key = (request_name, data_type)
-        if key in cache.cache.keys():
-            print("Get from cache")
-            remote_data = create_answer(data_type, key, cache, head_id)
-        else:
-            remote_data = remote_request(local_data, offset, data_type, cache)
-            if data_type == 'NS':
-                correct_ip_data(cache.cache[key]['servers'], cache)
-            cache.write()
         try:
-            local_server.sendto(remote_data, local_address)
-        except:
-            print('SENDING ERROR')
+            if key in cache.cache.keys():
+                print("Get from cache")
+                remote_data = create_answer(data_type, key, cache, head_id)
+            else:
+                remote_data = remote_request(local_data, offset, data_type, cache)
+                if data_type == 'NS':
+                    correct_ip_data(cache.cache[key]['servers'], cache)
+                cache.write()
+            try:
+                local_server.sendto(remote_data, local_address)
+            except:
+                print('SENDING ERROR')
+        except KeyboardInterrupt:
+            cache.write()
 
 
 if __name__ == '__main__':
